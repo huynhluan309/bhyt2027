@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<!--
+  VỎ ỨNG DỤNG ĐIỆN THOẠI – Đăng ký BHYT thân nhân CBCS (dùng với Code.gs từ phiên bản 1.6.0)
+  Bản phẳng: tất cả file (kể cả ảnh) nằm chung một chỗ. Link /exec đã điền sẵn ở dòng APP_URL bên dưới.
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BHYT thân nhân CBCS</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#22402f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BHYT CBCS">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+<style>
+  :root { --green:#22402f; --green-2:#1a3325; --gold:#e3b54a; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--green); overflow:hidden; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; -webkit-tap-highlight-color:transparent; }
+  body { display:flex; flex-direction:column; padding-top:env(safe-area-inset-top); padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
+  #app { flex:1; width:100%; border:0; display:block; background:#f3f5f1; }
+  .day { height:env(safe-area-inset-bottom); background:#fff; flex:none; }
+  #splash { position:fixed; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; text-align:center; color:#fff; background:linear-gradient(180deg,var(--green),var(--green-2)); transition:opacity .45s ease; }
+  #splash.an { opacity:0; pointer-events:none; }
+  #splash img { width:min(58vw,250px); height:auto; filter:drop-shadow(0 4px 10px rgba(0,0,0,.35)); }
+  #splash .t1 { font-size:12px; letter-spacing:.14em; text-transform:uppercase; opacity:.8; font-weight:600; margin-top:6px; }
+  #splash .t2 { font-size:20px; font-weight:700; line-height:1.3; max-width:22em; }
+  #splash .tt { font-size:14px; opacity:.85; min-height:1.4em; }
+  .spin { width:30px; height:30px; border:3px solid rgba(255,255,255,.25); border-top-color:var(--gold); border-radius:50%; animation:q .8s linear infinite; margin-top:8px; }
+  @keyframes q { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion:reduce) { .spin { animation-duration:3s; } }
+  .nut { margin-top:8px; background:var(--gold); color:#1d2a20; border:0; border-radius:12px; padding:12px 22px; font-size:16px; font-weight:700; cursor:pointer; }
+  #splash [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<iframe id="app" title="Đăng ký BHYT thân nhân CBCS"></iframe>
+<div class="day"></div>
+
+<div id="splash" role="status" aria-live="polite">
+  <img src="emblem.png" alt="Huy hiệu Công an nhân dân">
+  <div class="t1">Công an TP Hồ Chí Minh</div>
+  <div class="t2">Đăng ký BHYT thân nhân CBCS</div>
+  <div class="spin" id="spin"></div>
+  <div class="tt" id="tt">Đang mở ứng dụng…</div>
+  <button class="nut" id="thuLai" type="button" hidden>Thử lại</button>
+</div>
+
+
+<script>
+/* ====== DÁN LINK ỨNG DỤNG WEB (kết thúc bằng /exec) VÀO GIỮA HAI DẤU NHÁY ====== */
+var APP_URL = 'https://script.google.com/macros/s/AKfycbyfKgIA3aO4i5c3LlLwUSDBB_wfZHiomO8We7KQV-UxyDXvHx0az-h2RbDmajXpjCM/exec';
+/* ================================================================================ */
+
+(function () {
+  var khung = document.getElementById('app');
+  var splash = document.getElementById('splash');
+  var tt = document.getElementById('tt');
+  var spin = document.getElementById('spin');
+  var thuLai = document.getElementById('thuLai');
+  var batDau = Date.now(), daMo = false, hen;
+
+  function loi(msg) { spin.hidden = true; tt.textContent = msg; thuLai.hidden = false; }
+  function anSplash() {
+    if (daMo) return; daMo = true; clearTimeout(hen);
+    setTimeout(function () { splash.classList.add('an'); }, Math.max(0, 1200 - (Date.now() - batDau)));
+  }
+  function mo() {
+    daMo = false; spin.hidden = false; thuLai.hidden = true; splash.classList.remove('an');
+    if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(APP_URL) && !/^http:\/\/localhost/.test(APP_URL)) {
+      loi('Chưa cấu hình: mở file index.html, dán link ứng dụng web (kết thúc bằng /exec) vào dòng APP_URL.');
+      return;
+    }
+    if (!navigator.onLine) { loi('Điện thoại đang không có mạng. Bật Wi-Fi hoặc 4G rồi bấm Thử lại.'); return; }
+    tt.textContent = 'Đang mở ứng dụng…';
+    batDau = Date.now();
+    khung.src = APP_URL + (APP_URL.indexOf('?') < 0 ? '?' : '&') + 'app=1&t=' + Date.now();
+    clearTimeout(hen);
+    hen = setTimeout(function () { if (!daMo) loi('Mạng chậm, ứng dụng chưa mở được. Bấm Thử lại.'); }, 30000);
+  }
+  khung.addEventListener('load', function () { if (khung.src) anSplash(); });
+  thuLai.addEventListener('click', mo);
+  window.addEventListener('online', function () { if (!daMo) mo(); });
+  mo();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+})();
+</script>
+</body>
+</html>
